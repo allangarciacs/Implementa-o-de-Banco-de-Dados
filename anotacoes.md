@@ -2,6 +2,8 @@
 
 ### **Aula 3 (24/08/2026)**
 
+Atividades JOIN
+
 SELECT <Lista de atributos>
 FROM   <Lista de tabelas>
 WHERE  <Condição>
