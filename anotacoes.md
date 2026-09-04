@@ -1,8 +1,194 @@
 # Anotações da disciplina
 
+### **Aula 6 (04/09/2026)**
+
+CURSORES - Não cairá em prova
+```sql
+DECLARE @nome VARCHAR(50);
+
+DECLARE cursorFuncionario CURSOR FOR
+SELECT Pnome FROM FUNCIONARIO;
+
+OPEN cursorFuncionario;
+
+FETCH NEXT FROM cursorFuncionario INTO @nome;
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+	PRINT @nome;
+	FETCH NEXT FROM cursorFuncionario INTO @nome;
+END
+
+CLOSE cursorFuncionario;
+DEALLOCATE cursorFuncionario;
+```
+WHILE
+```sql
+-- Exemplo 01
+
+DECLARE @contador INT = 0;
+
+WHILE @contador < 10
+BEGIN
+	SET @contador = @contador+1
+	PRINT 'Contador: ' + CAST(@contador AS VARCHAR(3));	
+END
+
+-- Ímpares
+
+DECLARE @contador INT = 0;
+
+WHILE @contador < 10
+BEGIN
+	SET @contador = @contador+1
+	IF @contador % 2 != 0
+		PRINT 'Contador: ' + CAST(@contador AS VARCHAR(3));	
+END
+
+-- Pares e comando CONTINUE
+DECLARE @contador INT = 0;
+
+WHILE @contador < 10
+BEGIN
+	SET @contador = @contador+1
+	IF @contador % 2 != 0
+		CONTINUE --
+		PRINT 'Contador: ' + CAST(@contador AS VARCHAR(3));	
+END
+```
+IIF - Um if com duas condições, q pode ser colocado no Select 
+IFF(condicao, se for verdade, se for falsa)
+```sql
+SELECT 
+	F.Pnome,
+	F.Unome,
+	F.Salario,
+	IIF(F.Salario < 20000,'Baixo','Alto') AS 'Categoria'
+	-- IFF(condicao, se for verdade, se for falsa)
+FROM FUNCIONARIO AS F;
+```
+IF / ELSE
+```sql
+-- Descubra a idade de um funcionário
+
+DECLARE @dataNasc DATE,
+		@nome VARCHAR(100),
+		@idade INT;
+
+SET @nome = 'Maria';
+SELECT @dataNasc = Datanasc FROM FUNCIONARIO WHERE Pnome = @nome;
+
+IF (MONTH(GETDATE()) < MONTH(@dataNasc) 
+    OR MONTH(GETDATE()) = MONTH(@dataNasc) 
+	AND DAY(@dataNasc) > DAY(GETDATE()))
+	SET @idade = DATEDIFF(YEAR,@dataNasc, GETDATE())-1
+ELSE 
+	SET @idade = DATEDIFF(YEAR,@dataNasc, GETDATE())
+
+PRINT @dataNasc;
+PRINT @idade;
+
+-- Descubra se um funcionario esta perto de se aposentar (idd > 55)
+
+DECLARE @dataNasc DATE,
+		@nome VARCHAR(100),
+		@idade INT;
+
+SET @nome = 'Jennifer';
+SELECT @dataNasc = Datanasc FROM FUNCIONARIO WHERE Pnome = @nome;
+
+SET @idade = YEAR(GETDATE()) - YEAR(@dataNasc);
+-- Outra maneira de calcular idade:
+-- SET @idade = DATEDIFF(YEAR, @dataNasc, GETDATE());
+
+IF (@idade <= 55)
+		PRINT 'Longe, idade: '
+		+ CAST(@idade AS VARCHAR(10));
+ELSE IF (@idade > 55 AND @idade < 60)
+		PRINT 'Próximo, idade: '
+		+ CAST(@idade AS VARCHAR(10));
+ELSE 
+	PRINT 'Passou, idade: ' 
+		+ CAST(@idade AS VARCHAR(10));
+```
+DATEDIFF(unidade, data_inicial, data_final)
+-> unidade = ano, mês ou dia
+```sql
+-- Descubra se um funcionario tem o salario maior que a media
+
+DECLARE @dataNasc DATE,
+		@nome VARCHAR(100),
+		@salario DECIMAL(10,2),
+		@media_salarial DECIMAL(10,2);
+
+SET @nome = 'Ana';
+SELECT @media_salarial = AVG(Salario) FROM FUNCIONARIO;
+SELECT @salario = Salario FROM FUNCIONARIO WHERE Pnome = @nome;
+
+IF (@salario > @media_salarial)
+	BEGIN
+		PRINT 'Salario do funcionario(a) '
+		+ @nome
+		+ ' é maior que a média ';
+	END;
+ELSE 
+	BEGIN
+		PRINT 'Salario do funcionario(a) '
+		+ @nome
+		+ ' é menor que a média ';
+	END;
+```
+CONVERT - Converte o estilo (principalmente de datas), tabela de conversão:
+<img width="671" height="219" alt="Captura de tela 2026-09-04 105927" src="https://github.com/user-attachments/assets/d57bbe9a-9fbd-43d7-9f09-4e3b1684ece2" />
+```sql
+-- Converter o formato da data de nasc de um funcionario
+
+DECLARE @dataNasc DATE,
+		@nome VARCHAR(100),
+		@salario DECIMAL(10,2); 
+
+SET @nome = 'Ana';
+SELECT @dataNasc = Datanasc FROM FUNCIONARIO WHERE Pnome = @nome;
+
+PRINT   'O funcionario(a) ' 
+		+ @nome 
+		+ ' nascido(a) em: '
+		+ CONVERT(VARCHAR(10), @dataNasc, 103);
+
+G-- Descobrir o salário a partir do nome
+
+DECLARE @nome VARCHAR(100),
+		@salario DECIMAL(10,2);
+
+SET @nome = 'Ana';
+SELECT @salario = Salario FROM FUNCIONARIO WHERE Pnome = @nome;
+
+PRINT   'O funcionario(a) ' 
+		+ @nome 
+		+ ' tem um salario de: RS '
+		+ CONVERT(VARCHAR(10), @salario*1.1);
+```
+CAST - Muda o tipo de dado de uma variável
+CAST(@nove_da_variavel AS NOVOTIPO);
+```sql
+-- Descobrir o salário a partir do nome
+
+DECLARE @nome VARCHAR(100),
+		@salario DECIMAL(10,2);
+
+SET @nome = 'Jennifer';
+SELECT @salario = Salario FROM FUNCIONARIO WHERE Pnome = @nome;
+
+PRINT   'O funcionario(a) ' 
+		+ @nome 
+		+ ' tem um salario de: RS '
+		+ CAST(@salario AS VARCHAR(10));
+```
+
 ### **Aula 5 (28/08/2026)**
 VARIÁVEIS EM SQL
 	-> DECLARE @nomeDaVariável tipo
+	
 ```sql
 DECLARE @nome VARCHAR(100),
 		@idade INT,
@@ -21,7 +207,6 @@ SELECT
 	@idade AS 'Idade',
 	@salario AS 'Salario',
 	@data AS 'Data de hoje';
-
 
 ```
 OPERADORES E JOIN - Testando em consultas
