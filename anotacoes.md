@@ -1,7 +1,128 @@
 # Anotações da disciplina
 
 ### **Aula 6 (04/09/2026)**
-BEGIN E END são o abre e fecha chaves do sql ({}).
+
+OUTRO PROCEDURE + GERAL
+```sql
+CREATE PROCEDURE sp_add_dpt(
+	@dpt_nome VARCHAR(50),
+	@dpt_numero INT,
+	@dpt_loc VARCHAR(50))
+AS
+BEGIN 
+	IF EXISTS (SELECT 1 FROM DEPARTAMENTO 
+			   WHERE Dnome = @dpt_nome)
+		BEGIN
+			PRINT 'Esse dp ja existe' + @dpt_nome;
+			RETURN;
+		END
+	ELSE 
+		BEGIN 
+			INSERT INTO DEPARTAMENTO (Dnome, Dnumero) 
+			VALUES(@dpt_nome, @dpt_numero);
+
+			INSERT INTO LOCALIZACAO_DEP (Dnumero, Dlocal)
+			VALUES(@dpt_numero, @dpt_loc);
+			PRINT @dpt_nome + 'Dp inserido com sucesso';
+			PRINT @dpt_loc + 'Local inserido com sucesso';
+		END
+END
+GO
+
+EXEC sp_add_dpt 'Compras', 130, 'Santa Maria';
+
+SELECT * FROM DEPARTAMENTO;
+
+-- FALTA CONCLUIR !!!!!!!!!!!! - lista funcionario per dp, se dp nao for especificado mostrar todos func de todos dp
+CREATE OR ALTER PROCEDURE sp_func_per_dpt(
+	@dpt_nome VARCHAR(50))
+AS
+BEGIN 
+	IF EXISTS (SELECT 1 FROM DEPARTAMENTO 
+			   WHERE @dpt_nome = ' ')
+		BEGIN
+			SELECT  
+				F.Pnome,
+				F.Unome
+				FROM FUNCIONARIO AS F
+				JOIN DEPARTAMENTO AS D
+				ON F.Dnr = D.Dnumero
+			RETURN;
+		END
+	ELSE 
+		BEGIN 
+			SELECT  
+				F.Pnome,
+				F.Unome
+				FROM FUNCIONARIO AS F
+				JOIN DEPARTAMENTO AS D
+				ON F.Dnr = D.Dnumero
+				WHERE Dnome = @dpt_nome
+			RETURN;
+		END
+END
+GO
+
+EXEC sp_funcsp_func_per_dpt	@dpt_nome = ' ';
+
+SELECT * FROM DEPARTAMENTO;
+
+
+```
+
+ENCRYPTION
+```sql
+CREATE PROCEDURE sp_funcionarios
+WITH ENCRYPTION
+AS 
+SELECT * FROM FUNCIONARIO;
+GO
+```
+
+sp_help mostra os metadados de objetos do banco (tabelas, funções, procedures, etc)
+```sql
+EXEC sp_help FUNCIONARIO;
+EXEC sp_help sp_aumento;
+```
+
+
+STORED PROCEDURE - PROCEDIMENTO ARMAZENADO
+```sql
+CREATE PROCEDURE sp_exibe_meu_nome
+AS 
+BEGIN
+	PRINT 'Allan S. Garcia';
+END
+GO
+
+EXEC sp_exibe_meu_nome;
+
+-- AUMENTAR O SALARIO NO BANCO
+
+CREATE PROCEDURE sp_aumento(@porcentagem DECIMAL(3,1)) -- 3 casas, 1 após a vírgula
+AS 
+BEGIN 
+	UPDATE FUNCIONARIO
+	SET Salario = Salario*(1+(@porcentagem/100))
+
+END
+GO
+
+EXEC dbo.sp_aumento @porcentagem = 5;
+
+CREATE OR ALTER PROCEDURE sp_aumento(
+	@porcentagem DECIMAL(3,1),
+	@cpf CHAR(11))
+AS
+BEGIN 
+	UPDATE FUNCIONARIO
+	SET Salario = Salario*(1+(@porcentagem/100))
+	WHERE Cpf = @cpf
+END 
+GO
+
+EXEC dbo.sp_aumento @porcentagem = 50, @cpf = '98765432300'
+```
 
 FUNÇÕES - FUNCTION 
 ```sql
@@ -94,7 +215,31 @@ RETURN (
 -- Por n ser um campo e sim uma tabela, é necessario executa-la no FROM
 SELECT * FROM dbo.fn_funcionarios_dp('Pesquisa');
 
+CREATE FUNCTION fn_salario_anual()
+RETURNS @sal_ano TABLE
+(
+	nome_completo VARCHAR(100),
+	salario DECIMAL(10,2),
+	salario_anual DECIMAL(10,2)
+)
+AS 
+BEGIN
+
+	INSERT INTO @sal_ano
+	SELECT 
+		CONCAT(F.Pnome, ' ', F.Minicial, ' ', F.Unome),
+		F.Salario,
+		F.Salario*13+(F.salario*0.3)
+	FROM FUNCIONARIO AS F
+	RETURN;
+
+END
+
+SELECT * FROM dbo.fn_salario_anual();
+
 ```
+
+BEGIN E END são o abre e fecha chaves do sql ({}).
 
 ### **Aula 6 (04/09/2026)**
 
