@@ -1,6 +1,102 @@
 # Anotações da disciplina
 
 ### **Aula 6 (04/09/2026)**
+BEGIN E END são o abre e fecha chaves do sql ({}).
+
+FUNÇÕES - FUNCTION 
+```sql
+CREATE FUNCTION fn_dobro(@numero INT)
+RETURNS INT 
+AS 
+BEGIN	
+	RETURN @numero*2;
+END
+GO;
+
+SELECT dbo.fn_dobro(250);
+
+-- Mostrar o dobro do salário da Maria
+
+SELECT 
+	Pnome,
+	Unome,
+	f.Salario, 
+	dbo.fn_dobro(F.Salario) AS 'Dobro'
+FROM FUNCIONARIO AS F
+WHERE F.Pnome = 'Maria';
+
+-- Mudar o parâmetro 
+
+CREATE OR ALTER FUNCTION fn_dobro(@numero DECIMAL(10,2))
+RETURNS DECIMAL(10,2) 
+AS 
+BEGIN	
+	RETURN @numero*2;
+END
+GO;
+
+-- Mostre os funcionarios cujo o salario é maior que o 
+-- dobro do menor salário
+
+DECLARE @menor_salario DECIMAL(10,2);
+SELECT @menor_salario = MIN(Salario)
+FROM FUNCIONARIO;
+SELECT 
+	Pnome,
+	Unome,
+	F.Salario
+FROM FUNCIONARIO AS F
+WHERE F.Salario > dbo.fn_dobro(@menor_salario)
+
+-- FUNÇÃO QUE CALCULA A IDADE
+
+CREATE FUNCTION fn_calcula_idade(@data_nasc DATE) 
+RETURNS INT 
+AS 
+BEGIN 
+    DECLARE @idade INT; 
+
+    SET @idade = DATEDIFF(YEAR, @data_nasc, GETDATE()); 
+
+    IF (MONTH(@data_nasc) > MONTH(GETDATE()) OR 
+       (MONTH(@data_nasc) = MONTH(GETDATE()) AND DAY(@data_nasc) > DAY(GETDATE()))) 
+    
+    SET @idade = @idade - 1; 
+   
+    RETURN @idade; 
+END
+GO
+
+-- Exbição
+
+SELECT
+	F.Pnome,
+	Unome,
+	CONVERT(VARCHAR,F.Datanasc,103) AS 'Data Nasc',
+	dbo.fn_calcula_idade(F.Datanasc) AS 'Idade'
+FROM FUNCIONARIO AS F
+
+-- MOSTRAR FUNCIONARIOS DE UM DETERMINADO DEPARTAMENTO
+
+CREATE FUNCTION fn_funcionarios_dp(@nome_dp VARCHAR(50))
+RETURNS TABLE
+AS 
+RETURN (
+	SELECT 
+		F.Pnome,
+		F.Unome
+	FROM FUNCIONARIO AS F
+	JOIN DEPARTAMENTO AS D
+	ON F.Dnr = D.Dnumero
+	WHERE D.Dnome = @nome_dp
+)
+
+-- Por n ser um campo e sim uma tabela, é necessario executa-la no FROM
+SELECT * FROM dbo.fn_funcionarios_dp('Pesquisa');
+
+```
+
+### **Aula 6 (04/09/2026)**
 
 CURSORES - Não cairá em prova
 ```sql
