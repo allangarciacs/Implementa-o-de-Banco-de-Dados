@@ -1,5 +1,34 @@
 # Anotações da disciplina
 
+### **Aula 7 (04/09/2026)**
+Human Resourse Machine
+The Farmer Was Replaced 
+```sql 
+CREATE OR ALTER PROCEDURE sp_add_funcionario(
+	@Pnome VARCHAR(50),
+	@Minicial VARCHAR(1),
+	@Unome VARCHAR(50),
+	@cpf VARCHAR(11))
+AS
+BEGIN 
+	DECLARE @nome_completo VARCHAR(100);
+	SET @nome_completo = CONCAT(@Pnome, ' ',@Minicial, ' ',@Unome);
+	IF EXISTS (SELECT 1 FROM FUNCIONARIO
+		WHERE @nome_completo = CONCAT(Pnome,' ',Minicial,' ',Unome))
+		PRINT 'Esse funcionario ja esta no sistema!'
+	ELSE 
+		BEGIN 
+			INSERT INTO FUNCIONARIO(Pnome, Minicial, Unome, Cpf) 
+			VALUES(@Pnome, @Minicial, @Unome, @Cpf)
+			PRINT @Pnome + 'Novo funcionario inserido no sistema!';
+		END
+END
+GO
+
+EXEC dbo.sp_add_funcionario 'Moscou', 'M', 'Ferreira', '00000000001';
+EXEC dbo.sp_add_funcionario 'Allan', 'S', 'Garcia', '00000000000';
+```
+
 ### **Aula 6 (04/09/2026)**
 
 OUTRO PROCEDURE + GERAL
