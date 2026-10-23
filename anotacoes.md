@@ -1,7 +1,9 @@
 # Anotações da disciplina
-
+OBS: LOG C TRIGGER VAI CAIR NA PROVA
+Atividades extras: 
+<img width="704" height="309" alt="image" src="https://github.com/user-attachments/assets/113bad08-72af-46d4-93e1-02e20b143627" />
 ### **Aula 9 (23/10/2026)**
-# Triggers + Mensagem de erro para o USER
+## Triggers + Mensagem de erro para o USER
 Um TRIGGER, quase sempre, é vinculado à uma tabela. (ON TABLE_NAME)
 ```sql
 CREATE TRIGGER trg_after_insert_dpt
@@ -15,7 +17,7 @@ END;
 INSERT INTO DEPARTAMENTO (Dnumero, Dnome)
 VALUES (88, 'Expedicao');
 ```
-
+INSTEAD OF 
 ```sql
 CREATE TRIGGER trg_insetadof_delete_dpt
 ON DEPARTAMENTO 
@@ -28,7 +30,6 @@ DELETE
 FROM DEPARTAMENTO
 WHERE Dnumero = 88;
 ```
-
 Desavbilitar trigger's
 ```sql
 ALTER TABLE DEPARTAMENTO
@@ -93,7 +94,7 @@ INSERT INTO DEPARTAMENTO (Dnumero, Dnome)
 VALUES (100, 'palio');
 ```
 Salvar logs (insert, update, delete) usando triggers (realizar um operação em uma tabela, o os triggers salvar o tipo, data, e parte q foi feita essa operação em outra tabela - LOG_FUNCIONARIO, nesse caso):
-```sql
+```sql 
 CREATE TABLE LOG_FUNCIONARIO(
 	log_id INT IDENTITY(100,1) PRIMARY KEY,
 	cpf CHAR(11),
