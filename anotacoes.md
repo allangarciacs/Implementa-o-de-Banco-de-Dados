@@ -1,5 +1,180 @@
 # Anotações da disciplina
 
+### **Aula 9 (23/10/2026)**
+# Triggers + Mensagem de erro para o USER
+Um TRIGGER, quase sempre, é vinculado à uma tabela. (ON TABLE_NAME)
+```sql
+CREATE TRIGGER trg_after_insert_dpt
+ON DEPARTAMENTO
+AFTER INSERT 
+AS
+BEGIN
+	PRINT 'Olá meu primeiro trigger!'
+END;
+
+INSERT INTO DEPARTAMENTO (Dnumero, Dnome)
+VALUES (88, 'Expedicao');
+```
+
+```sql
+CREATE TRIGGER trg_insetadof_delete_dpt
+ON DEPARTAMENTO 
+INSTEAD OF DELETE 
+AS BEGIN 
+	PRINT 'Nao deletei o registro';
+END
+
+DELETE 
+FROM DEPARTAMENTO
+WHERE Dnumero = 88;
+```
+
+Desavbilitar trigger's
+```sql
+ALTER TABLE DEPARTAMENTO
+DISABLE TRIGGER trg_insetadof_delete_dpt;
+```
+Mostrar trigger's de cada tablea
+```sql
+EXEC sp_helptrigger DEPARTAMENTO;
+```
+Função UPDATE() - Verificar se um nome foi alterado.
+```sql
+CREATE TRIGGER trg_for_update_nome
+ON DEPARTAMENTO
+FOR UPDATE -- FOR = AFTER 
+AS 
+BEGIN 
+	DECLARE @nome_antigo VARCHAR(40),
+			@nome_novo	VARCHAR(40);
+	SELECT @nome_antigo = D.Dnome FROM deleted AS D;
+	SELECT @nome_novo = I.Dnome FROM inserted AS I;
+	IF UPDATE(Dnome)
+	BEGIN
+		PRINT 'O NOME ERA: ' + @nome_antigo;
+		PRINT 'O NOME NOVO É: ' + @nome_novo;
+	END
+	ELSE
+		PRINT 'O NOME N FOI ALTERADO'
+END
+
+-- EXEC'S
+UPDATE DEPARTAMENTO
+SET Dnome = 'Tecnologia'
+WHERE Dnome = 'TI'
+
+UPDATE DEPARTAMENTO
+SET Dnumero = 10
+WHERE Dnome = 'palio'
+```
+
+Trigger para impedir mais de um departamento com o mesmo nome (caso o coluna não tenha sido posta como única na criação do BD)
+```sql
+CREATE TRIGGER trg_insteadof_insert_dpt
+ON DEPARTAMENTO 
+INSTEAD OF INSERT  
+AS 
+BEGIN 
+	DECLARE @nome VARCHAR(40), @numero INT;
+	-- Atribuir a variavel @nome o valor que esta no insert 
+	SELECT @nome = I.Dnome, @numero = Dnumero FROM inserted AS I
+	IF EXISTS (SELECT 1 FROM DEPARTAMENTO WHERE Dnome = @nome)
+		RAISERROR('JA EXISTE UM DP COM ESSE NOME!',16,1)
+	ELSE 
+		INSERT INTO DEPARTAMENTO (Dnumero,Dnome,Cpf_gerente,Data_inicio_gerente)
+		SELECT I.Dnumero, I.Dnome, I.Cpf_gerente, I.Data_inicio_gerente
+		FROM inserted AS I
+END
+GO
+
+-- execução
+SELECT * FROM DEPARTAMENTO
+INSERT INTO DEPARTAMENTO (Dnumero, Dnome)
+VALUES (100, 'palio');
+```
+Salvar logs (insert, update, delete) usando triggers (realizar um operação em uma tabela, o os triggers salvar o tipo, data, e parte q foi feita essa operação em outra tabela - LOG_FUNCIONARIO, nesse caso):
+```sql
+CREATE TABLE LOG_FUNCIONARIO(
+	log_id INT IDENTITY(100,1) PRIMARY KEY,
+	cpf CHAR(11),
+	operacao VARCHAR(10),
+	data_hora DATETIME DEFAULT GETDATE()
+	)
+
+CREATE TRIGGER trg_for_insert_funcionario
+ON FUNCIONARIO
+FOR INSERT 
+AS 
+BEGIN 
+	INSERT INTO LOG_FUNCIONARIO (cpf_funcionario, operacao)
+	SELECT I.Cpf, 'INSERT' 
+	FROM inserted AS I
+END 
+
+
+CREATE TRIGGER trg_for_updated_funcionario
+ON FUNCIONARIO
+FOR UPDATE 
+AS 
+BEGIN 
+	INSERT INTO LOG_FUNCIONARIO (cpf_funcionario, operacao)
+	SELECT I.Cpf, 'UPDATE' 
+	FROM inserted AS I
+END 
+
+CREATE TRIGGER trg_for_deleted_funcionario
+ON FUNCIONARIO
+FOR DELETE 
+AS 
+BEGIN 
+	INSERT INTO LOG_FUNCIONARIO (cpf_funcionario, operacao)
+	SELECT D.Cpf, 'DELETE' 
+	FROM deleted AS D
+END 
+
+INSERT INTO FUNCIONARIO (Pnome, Unome, Cpf, Datanasc, Endereco, Sexo, Salario, Bonus, Data_Admissao, Dnr)
+VALUES ('Allan', 'Garcia', '01234512345', '2005-02-02', 'Andradas','M',10000,0,'2026-10-23',6);
+
+select * from FUNCIONARIO;
+select * from LOG_FUNCIONARIO;
+
+UPDATE FUNCIONARIO 
+SET Salario = 500
+WHERE Cpf = '01234512345';
+
+DELETE FROM FUNCIONARIO
+WHERE Cpf = '01234512345';
+```
+De maneira simplificada (Insert, Delete e Update em um só trigger):
+```sql
+CREATE TRIGGER trg_for_IDU_funcionario
+ON FUNCIONARIO
+FOR INSERT, DELETE, UPDATE
+AS 
+BEGIN 
+-- Se update 
+	IF EXISTS (SELECT * FROM inserted)
+	BEGIN 
+		IF EXISTS (SELECT * FROM deleted)
+			INSERT INTO LOG_FUNCIONARIO (cpf_funcionario, operacao)
+			SELECT I.Cpf, 'UPDATE' 
+			FROM inserted AS I
+		ELSE 
+			INSERT INTO LOG_FUNCIONARIO (cpf_funcionario, operacao)
+			SELECT I.Cpf, 'INSERT' 
+			FROM inserted AS I
+		END
+		ELSE
+			INSERT INTO LOG_FUNCIONARIO (cpf_funcionario, operacao)
+			SELECT D.Cpf, 'DELETE' 
+			FROM deleted AS D
+END 
+```
+
+### **Aula 8 (09/10/2026)**
+### Transações
+
+
 ### **Aula 7 (04/09/2026)**
 Human Resourse Machine
 The Farmer Was Replaced 
@@ -62,7 +237,9 @@ EXEC sp_add_dpt 'Compras', 130, 'Santa Maria';
 
 SELECT * FROM DEPARTAMENTO;
 
--- FALTA CONCLUIR !!!!!!!!!!!! - lista funcionario per dp, se dp nao for especificado mostrar todos func de todos dp
+```
+FALTA CONCLUIR !!!!!!!!!!!! - lista funcionario per dp, se dp nao for especificado mostrar todos func de todos dp
+```sql
 CREATE OR ALTER PROCEDURE sp_func_per_dpt(
 	@dpt_nome VARCHAR(50))
 AS
@@ -96,9 +273,7 @@ EXEC sp_funcsp_func_per_dpt	@dpt_nome = ' ';
 
 SELECT * FROM DEPARTAMENTO;
 
-
 ```
-
 ENCRYPTION
 ```sql
 CREATE PROCEDURE sp_funcionarios
@@ -126,8 +301,9 @@ GO
 
 EXEC sp_exibe_meu_nome;
 
--- AUMENTAR O SALARIO NO BANCO
-
+```
+AUMENTAR O SALARIO NO BANCO
+```sql
 CREATE PROCEDURE sp_aumento(@porcentagem DECIMAL(3,1)) -- 3 casas, 1 após a vírgula
 AS 
 BEGIN 
@@ -152,7 +328,6 @@ GO
 
 EXEC dbo.sp_aumento @porcentagem = 50, @cpf = '98765432300'
 ```
-
 FUNÇÕES - FUNCTION 
 ```sql
 CREATE FUNCTION fn_dobro(@numero INT)
@@ -165,8 +340,9 @@ GO;
 
 SELECT dbo.fn_dobro(250);
 
--- Mostrar o dobro do salário da Maria
-
+```
+Mostrar o dobro do salário da Maria
+```sql
 SELECT 
 	Pnome,
 	Unome,
@@ -184,10 +360,9 @@ BEGIN
 	RETURN @numero*2;
 END
 GO;
-
--- Mostre os funcionarios cujo o salario é maior que o 
--- dobro do menor salário
-
+```
+Mostre os funcionarios cujo o salario é maior que o dobro do menor salário
+```sql
 DECLARE @menor_salario DECIMAL(10,2);
 SELECT @menor_salario = MIN(Salario)
 FROM FUNCIONARIO;
@@ -197,9 +372,9 @@ SELECT
 	F.Salario
 FROM FUNCIONARIO AS F
 WHERE F.Salario > dbo.fn_dobro(@menor_salario)
-
--- FUNÇÃO QUE CALCULA A IDADE
-
+```
+FUNÇÃO QUE CALCULA A IDADE
+```sql
 CREATE FUNCTION fn_calcula_idade(@data_nasc DATE) 
 RETURNS INT 
 AS 
@@ -216,18 +391,16 @@ BEGIN
     RETURN @idade; 
 END
 GO
-
 -- Exbição
-
 SELECT
 	F.Pnome,
 	Unome,
 	CONVERT(VARCHAR,F.Datanasc,103) AS 'Data Nasc',
 	dbo.fn_calcula_idade(F.Datanasc) AS 'Idade'
 FROM FUNCIONARIO AS F
-
--- MOSTRAR FUNCIONARIOS DE UM DETERMINADO DEPARTAMENTO
-
+```
+MOSTRAR FUNCIONARIOS DE UM DETERMINADO DEPARTAMENTO
+```sql
 CREATE FUNCTION fn_funcionarios_dp(@nome_dp VARCHAR(50))
 RETURNS TABLE
 AS 
@@ -263,9 +436,7 @@ BEGIN
 	RETURN;
 
 END
-
 SELECT * FROM dbo.fn_salario_anual();
-
 ```
 
 BEGIN E END são o abre e fecha chaves do sql ({}).
