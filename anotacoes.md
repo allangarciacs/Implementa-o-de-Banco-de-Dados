@@ -3,6 +3,20 @@ OBS: LOG C TRIGGER VAI CAIR NA PROVA
 Atividades extras: 
 <img width="704" height="309" alt="image" src="https://github.com/user-attachments/assets/113bad08-72af-46d4-93e1-02e20b143627" />
 ### **Aula 9 (23/10/2026)**
+## VIEW
+```sql
+CREATE VIEW vw_fh_funcionario_dpt
+AS
+SELECT
+	CONCAT(Pnome, ' ', Minicial, ' ', Unome) AS 'NOME',
+	DATEDIFF(YEAR, Datanasc, GETDATE()) AS 'IDADE',
+	Endereco AS 'ENDERECO',
+	Data_Admissao AS 'ADMICAO',
+	D.Dnome AS 'DEPARTAKENTO'
+FROM FUNCIONARIO AS F
+JOIN DEPARTAMENTO AS D
+ON F.Dnr = D.Dnumero
+```
 ## Triggers + Mensagem de erro para o USER
 Um TRIGGER, quase sempre, é vinculado à uma tabela. (ON TABLE_NAME)
 ```sql
